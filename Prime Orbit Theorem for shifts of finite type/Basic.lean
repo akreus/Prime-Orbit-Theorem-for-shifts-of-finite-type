@@ -2,16 +2,26 @@ import Mathlib.Dynamics.SymbolicDynamics.Basic
 import Mathlib.Dynamics.PeriodicPts.Defs
 import Mathlib.Dynamics.PeriodicPts.Lemmas
 import Mathlib.LinearAlgebra.Matrix.Trace
+import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
+import Mathlib.Data.Complex.Basic
 
 /-
 Might not even need SymbolicDynamics.Basic as we define SoFT to a higher
 level of specificity (generality and lemmas in Mathlib not necessary)
  -/
 
+open Function Matrix
+
 variable {k : ℕ}
 
 /- Defns for two-sided shift spaces -/
 abbrev TransitionMatrix (k : ℕ) := Matrix (Fin k) (Fin k) Bool
+
+/- So we can use it for Trace and Det -/
+def TransitionMatrix.toRealMatrix (A : TransitionMatrix k) : Matrix (Fin k) (Fin k) ℝ :=
+  fun i j => if A i j then 1 else 0
+
+/- Set of all sequences -/
 abbrev FullShift (k : ℕ) := ℤ -> Fin k
 
 def shift (x : FullShift k) : FullShift k := fun n => x (n + 1)
@@ -27,8 +37,6 @@ theorem shift_mapsTo (A : TransitionMatrix k) :
   exact Set.mapsTo_iff_subset_preimage.mpr fun ⦃a⦄ a_1 n ↦ a_1 (n + 1)
 
 variable (A : TransitionMatrix k)
-
-open Function
 
 /- Useful defns in Dynamics.PeriodicPts -/
 #check periodicOrbit /- All prime orbits in the FullShift -/
@@ -46,8 +54,23 @@ def IsPrimeOrbitOf (n : ℕ) (x : FullShift k) : Prop := minimalPeriod σ x = n
 noncomputable def primeOrbits : Set (Cycle (FullShift k)) :=
   (fun x => periodicOrbit σ x) '' (SoFT A  ∩ periodicPts σ)
 
-def orbitPeriod (x : FullShift k) : ℕ := sorry
-notation "λ" => orbitPeriod
+/- Periodic orbit as a pair (x, n) with proofs -/
+structure PeriodicOrbit where
+  x : FullShift k
+  n : ℕ
+  mem : x ∈ SoFT A
+  periodic : IsPeriodicPt σ n x
 
-def primeOrbitCount (n : ℕ) : ℕ := sorry
-notation "π" => primeOrbitCount
+def period (τ : PeriodicOrbit A) := τ.n
+notation "λ" => period
+
+noncomputable
+def primePeriod (τ : PeriodicOrbit A) := minimalPeriod σ τ.x
+notation "Λ" => primePeriod
+
+/- def as in lem 3.2 then prove other defns backwards -/
+noncomputable
+def zeta (z : ℂ) : ℂ := (det (1 - z • A.toRealMatrix.map ((↑) : ℝ → ℂ)))⁻¹
+
+noncomputable
+def zetaProd (z : ℂ) : ℂ := ∏ τ ∈ primeOrbits A, (1 - z ^ λ τ)⁻¹
