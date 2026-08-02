@@ -3,7 +3,7 @@ import Mathlib.Dynamics.PeriodicPts.Defs
 import Mathlib.Dynamics.PeriodicPts.Lemmas
 import Mathlib.LinearAlgebra.Matrix.Trace
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
-import Mathlib.Data.Complex.Basic
+import Mathlib.Analysis.Complex.Basic
 
 /-
 Might not even need SymbolicDynamics.Basic as we define SoFT to a higher
@@ -39,7 +39,7 @@ theorem shift_mapsTo (A : TransitionMatrix k) :
 variable (A : TransitionMatrix k)
 
 /- Useful defns in Dynamics.PeriodicPts -/
-#check periodicOrbit /- All prime orbits in the FullShift -/
+#check periodicOrbit /- σ → x → Cycle (FullShift k) -/
 #check isPeriodicPt_iff_minimalPeriod_dvd /- minimalperiod | period -/
 #check periodicPts /- Set of all periodic points -/
 #check ptsOfPeriod /- Set of periodic pts given a period (minimal or not) -/
@@ -51,13 +51,15 @@ def Fix (n : ℕ) : Set (FullShift k) := SoFT A ∩ ptsOfPeriod σ n
 def IsPrimeOrbitOf (n : ℕ) (x : FullShift k) : Prop := minimalPeriod σ x = n
 
 /- Set of all prime orbits in SoFT. To be used for indexing sums later -/
-noncomputable def primeOrbits : Set (Cycle (FullShift k)) :=
+noncomputable
+def primeOrbits : Set (Cycle (FullShift k)) :=
   (fun x => periodicOrbit σ x) '' (SoFT A  ∩ periodicPts σ)
 
 /- Periodic orbit as a pair (x, n) with proofs -/
 structure PeriodicOrbit where
   x : FullShift k
   n : ℕ
+  hn : n > 0 -- if n=0 then IsPeriodicPt σ 0 x means x isn't periodic
   mem : x ∈ SoFT A
   periodic : IsPeriodicPt σ n x
 
@@ -68,9 +70,28 @@ noncomputable
 def primePeriod (τ : PeriodicOrbit A) := minimalPeriod σ τ.x
 notation "Λ" => primePeriod
 
+/- orbit is prime if minimal period equals period -/
+def PeriodicOrbit.IsPrime (τ : PeriodicOrbit A) : Prop :=
+  period _ τ = primePeriod _ τ
+
 /- def as in lem 3.2 then prove other defns backwards -/
 noncomputable
-def zeta (z : ℂ) : ℂ := (det (1 - z • A.toRealMatrix.map ((↑) : ℝ → ℂ)))⁻¹
+def zeta (z : ℂ) : ℂ :=
+  (det (1 - z • A.toRealMatrix.map ((↑) : ℝ → ℂ)))⁻¹
 
+/- product definition as in def 3.1 -/
 noncomputable
-def zetaProd (z : ℂ) : ℂ := ∏ τ ∈ primeOrbits A, (1 - z ^ λ τ)⁻¹
+def zetaProd (z : ℂ) : ℂ :=
+  ∏' τ : primeOrbits A, (1 - z ^ (τ : Cycle (FullShift k)).length)⁻¹
+
+/- τ PeriodicOrbit, then τ.x has a primeOrbit-/
+theorem periodicOrbits_mem_primeOrbits (τ : PeriodicOrbit A) :
+    periodicOrbit σ τ.x ∈ primeOrbits A :=
+  Set.mem_image_of_mem _ ⟨τ.mem, τ.n, τ.hn, τ.periodic⟩
+/- e.g. (1,2,1,2,1,2) PeriodicOrbit with (1,2) ∈ primeOrbits-/
+
+/- IsPrime then length of primeOrbit = τ.n -/
+theorem periodicOrbit_length_eq_period {τ : PeriodicOrbit A} (hτ : τ.IsPrime) :
+    (periodicOrbit σ τ.x).length = τ.n := by
+  simp [PeriodicOrbit.IsPrime, period, primePeriod] at hτ
+  simp [hτ]
