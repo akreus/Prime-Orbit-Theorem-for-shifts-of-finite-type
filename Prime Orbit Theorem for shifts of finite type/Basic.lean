@@ -4,7 +4,7 @@ import Mathlib.Dynamics.PeriodicPts.Lemmas
 import Mathlib.LinearAlgebra.Matrix.Trace
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 import Mathlib.Analysis.Complex.Basic
-import Mathlib.Analysis.SpecialFunctions.Complex.Log
+import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 
 /-
 Might not even need SymbolicDynamics.Basic as we define SoFT to a higher
@@ -97,7 +97,13 @@ theorem periodicOrbit_length_eq_period {τ : PeriodicOrbit A} (hτ : τ.IsPrime)
   simp [PeriodicOrbit.IsPrime, period, primePeriod] at hτ
   simp [hτ]
 
-/- lem 3.1 (Σz^n/n#Fixn = S => zetaprod = S)) -/
+/- power series of log(1-z) in ℂ -/
+#check Complex.hasSum_taylorSeries_neg_log
+
+/- may or may not need but its in : Mathlib.Analysis.SpecialFunctions.Log.Summable
+#check Complex.hasProd_of_hasSum_log -/
+
+/- lem 3.1 (Σz^n/n#Fixn = S => zetaprod z = S)) -/
 theorem hasProd_zeta_of_hasSum (z : ℂ) (S : ℂ)
     (hS : HasSum (fun n : ℕ => z ^ n / n * (Nat.card (Fix A n) : ℂ)) S) :
     HasProd (fun τ : primeOrbits A => (1 - z ^ (τ : Cycle (FullShift k)).length)⁻¹)
