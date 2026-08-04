@@ -11,7 +11,7 @@ Might not even need SymbolicDynamics.Basic as we define SoFT to a higher
 level of specificity (generality and lemmas in Mathlib not necessary)
  -/
 
-open Function Matrix
+open Function Matrix Complex
 
 variable {k : ℕ}
 
@@ -98,14 +98,24 @@ theorem periodicOrbit_length_eq_period {τ : PeriodicOrbit A} (hτ : τ.IsPrime)
   simp [hτ]
 
 /- power series of log(1-z) in ℂ -/
-#check Complex.hasSum_taylorSeries_neg_log
+#check hasSum_taylorSeries_neg_log
 
 /- may or may not need but its in : Mathlib.Analysis.SpecialFunctions.Log.Summable
-#check Complex.hasProd_of_hasSum_log -/
+#check hasProd_of_hasSum_log -/
+#check exp_log
+#check HasProd.congr_fun
 
 /- lem 3.1 (Σz^n/n#Fixn = S => zetaprod z = S)) -/
-theorem hasProd_zeta_of_hasSum (z : ℂ) (S : ℂ)
+theorem hasProd_zeta_of_hasSum (z : ℂ) (hz : ‖z‖ < 1) (S : ℂ)
     (hS : HasSum (fun n : ℕ => z ^ n / n * (Nat.card (Fix A n) : ℂ)) S) :
     HasProd (fun τ : primeOrbits A => (1 - z ^ (τ : Cycle (FullShift k)).length)⁻¹)
-    (Complex.exp S) := by
-  sorry
+    (exp S) := by
+  apply HasProd.congr_fun
+    (f := fun τ : primeOrbits A => exp (-log (1 - z ^ (τ : Cycle (FullShift k)).length)))
+  rotate_left
+  · intro τ
+    rw [exp_neg, exp_log]
+    have hneτ : (τ : Cycle (FullShift k)).length ≠ 0 := by
+      sorry
+    sorry
+  sorry -- goal: HasProd (fun τ => exp (-log (1 - z^λ(τ)))) (exp S)
