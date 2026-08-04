@@ -116,6 +116,14 @@ theorem hasProd_zeta_of_hasSum (z : ℂ) (hz : ‖z‖ < 1) (S : ℂ)
   · intro τ
     rw [exp_neg, exp_log]
     have hneτ : (τ : Cycle (FullShift k)).length ≠ 0 := by
-      sorry
-    sorry
+      obtain ⟨x, ⟨_, hx_per⟩, hxeq⟩ := τ.2
+      rw [← hxeq, periodicOrbit_length]
+      exact (minimalPeriod_pos_of_mem_periodicPts hx_per).ne'
+    rw [sub_ne_zero]
+    intro heq
+    have h1 : ‖z ^ (τ : Cycle (FullShift k)).length‖ = 1 := by rw [← heq]; norm_num
+    rw [norm_pow] at h1
+    have h2 : ‖z‖ ^ (τ : Cycle (FullShift k)).length < 1 :=
+      pow_lt_one₀ (norm_nonneg z) hz hneτ
+    linarith
   sorry -- goal: HasProd (fun τ => exp (-log (1 - z^λ(τ)))) (exp S)
