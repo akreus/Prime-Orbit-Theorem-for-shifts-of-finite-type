@@ -105,8 +105,14 @@ theorem periodicOrbit_length_eq_period {τ : PeriodicOrbit A} (hτ : τ.IsPrime)
 #check exp_log
 #check HasProd.congr_fun
 
+/- RoC of ∑zⁿ/n·#Fixₙ less than 1 -/
+lemma mod_lt_one_of_hasSum (z : ℂ) (S : ℂ)
+    (hS : HasSum (fun n : ℕ => z ^ n / n * (Nat.card (Fix A n) : ℂ)) S) :
+    ‖z‖ < 1 := by
+  sorry
+
 /- lem 3.1 (Σz^n/n#Fixn = S => zetaprod z = S)) -/
-theorem hasProd_zeta_of_hasSum (z : ℂ) (hz : ‖z‖ < 1) (S : ℂ)
+theorem hasProd_zeta_of_hasSum (z : ℂ) (S : ℂ)
     (hS : HasSum (fun n : ℕ => z ^ n / n * (Nat.card (Fix A n) : ℂ)) S) :
     HasProd (fun τ : primeOrbits A => (1 - z ^ (τ : Cycle (FullShift k)).length)⁻¹)
     (exp S) := by
@@ -124,6 +130,35 @@ theorem hasProd_zeta_of_hasSum (z : ℂ) (hz : ‖z‖ < 1) (S : ℂ)
     have h1 : ‖z ^ (τ : Cycle (FullShift k)).length‖ = 1 := by rw [← heq]; norm_num
     rw [norm_pow] at h1
     have h2 : ‖z‖ ^ (τ : Cycle (FullShift k)).length < 1 :=
-      pow_lt_one₀ (norm_nonneg z) hz hneτ
+      pow_lt_one₀ (norm_nonneg z) (mod_lt_one_of_hasSum A z S hS) hneτ
     linarith
   sorry -- goal: HasProd (fun τ => exp (-log (1 - z^λ(τ)))) (exp S)
+
+/- #Fixₙ = Tr(Aⁿ) -/
+lemma fix_eq_trace (n : ℕ) :
+    (Nat.card (Fix A n) : ℝ) = trace (A.toRealMatrix ^ n) := by
+  /-
+  Prove bijection: x ∈ Fixₙ ↔ x₀,...,x_{n-1} s.t.
+  A(x₀,x₁)=...=A(x_{n-2},x_{n-1})=A(x_{n-1},x₀)=1
+  Then #Fixₙ=∑1 over x₀,...,x_{n-1} s.t. ...
+  =∑ A(x₀,x₁)...A(x_{n-1},x₀) over all x₀,...,x_{n-1} ∈ Fin k
+  =∑ Aⁿ(x₀,x₀) (inductively on n by defn of matrix mult)
+  = Tr(Aⁿ)
+  -/
+  sorry
+
+/- lem3.2 (∑z^n/n#Fixn = 1/det(I-zA))-/
+theorem zeta_eq_hasSum (z : ℂ) (S : ℂ)
+    (hS : HasSum (fun n : ℕ => z ^ n / n * (Nat.card (Fix A n) : ℂ)) S) :
+    zeta A z = exp S := by
+  sorry
+
+/- Cor: zeta = zetaProd for suff small z-/
+theorem zeta_eq_zetaProd (z : ℂ) (S : ℂ)
+    (hS : HasSum (fun n : ℕ => z ^ n / n * (Nat.card (Fix A n) : ℂ)) S) :
+    zeta A z = zetaProd A z := by
+  unfold zetaProd
+  rw [(hasProd_zeta_of_hasSum A z S hS).tprod_eq]
+  exact zeta_eq_hasSum A z S hS
+
+/- Next step : use Perron-Frobenius as a black box result (not in Mathlib yet) -/
