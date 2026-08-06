@@ -3,6 +3,7 @@ import Mathlib.Dynamics.PeriodicPts.Defs
 import Mathlib.Dynamics.PeriodicPts.Lemmas
 import Mathlib.LinearAlgebra.Matrix.Trace
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
+import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 
@@ -21,6 +22,13 @@ abbrev TransitionMatrix (k : ℕ) := Matrix (Fin k) (Fin k) Bool
 /- So we can use it for Trace and Det -/
 def TransitionMatrix.toRealMatrix (A : TransitionMatrix k) : Matrix (Fin k) (Fin k) ℝ :=
   fun i j => if A i j then 1 else 0
+
+/- So we can use it for complex eigenvalues -/
+def TransitionMatrix.toComplexMatrix (A : TransitionMatrix k) : Matrix (Fin k) (Fin k) ℂ :=
+  fun i j => if A i j then 1 else 0
+
+def TransitionMatrix.IsAperiodic (A : TransitionMatrix k) : Prop :=
+  ∃ n : ℕ, ∀ i : Fin k, ∀ j : Fin k, ((A.toRealMatrix)^n) i j > 0
 
 /- Set of all sequences -/
 abbrev FullShift (k : ℕ) := ℤ -> Fin k
@@ -100,11 +108,6 @@ theorem periodicOrbit_length_eq_period {τ : PeriodicOrbit A} (hτ : τ.IsPrime)
 /- power series of log(1-z) in ℂ -/
 #check hasSum_taylorSeries_neg_log
 
-/- may or may not need but its in : Mathlib.Analysis.SpecialFunctions.Log.Summable
-#check hasProd_of_hasSum_log -/
-#check exp_log
-#check HasProd.congr_fun
-
 /- RoC of ∑zⁿ/n·#Fixₙ less than 1 -/
 lemma mod_lt_one_of_hasSum (z : ℂ) (S : ℂ)
     (hS : HasSum (fun n : ℕ => z ^ n / n * (Nat.card (Fix A n) : ℂ)) S) :
@@ -134,17 +137,24 @@ theorem hasProd_zeta_of_hasSum (z : ℂ) (S : ℂ)
     linarith
   sorry -- goal: HasProd (fun τ => exp (-log (1 - z^λ(τ)))) (exp S)
 
-/- #Fixₙ = Tr(Aⁿ) -/
-lemma fix_eq_trace (n : ℕ) :
-    (Nat.card (Fix A n) : ℝ) = trace (A.toRealMatrix ^ n) := by
-  /-
+/- #Fixₙ = Tr(Aⁿ)
+Rough proof:
   Prove bijection: x ∈ Fixₙ ↔ x₀,...,x_{n-1} s.t.
   A(x₀,x₁)=...=A(x_{n-2},x_{n-1})=A(x_{n-1},x₀)=1
   Then #Fixₙ=∑1 over x₀,...,x_{n-1} s.t. ...
   =∑ A(x₀,x₁)...A(x_{n-1},x₀) over all x₀,...,x_{n-1} ∈ Fin k
   =∑ Aⁿ(x₀,x₀) (inductively on n by defn of matrix mult)
   = Tr(Aⁿ)
-  -/
+-/
+
+def fixBijectsTuple (n : ℕ) [NeZero n] :
+    Fix A n ≃ {v : Fin n → Fin k // ∀ i, A (v i) (v (i + 1)) = true} where
+  toFun x := ⟨fun i => (x : FullShift k) i, fun i => x.2.2 i⟩
+  invFun v := ⟨fun j => v (j % n : ℤ).toNat, sorry⟩
+
+theorem fix_eq_trace (n : ℕ) :
+    (Nat.card (Fix A n) : ℝ) = trace (A.toRealMatrix ^ n) := by
+
   sorry
 
 /- lem3.2 (∑z^n/n#Fixn = 1/det(I-zA))-/
@@ -161,4 +171,8 @@ theorem zeta_eq_zetaProd (z : ℂ) (S : ℂ)
   rw [(hasProd_zeta_of_hasSum A z S hS).tprod_eq]
   exact zeta_eq_hasSum A z S hS
 
-/- Next step : use Perron-Frobenius as a black box result (not in Mathlib yet) -/
+/- use Perron-Frobenius as a black box result (not in Mathlib yet) -/
+theorem exists_maximal_eigenval (hA : A.IsAperiodic) : -- have A nonneg for free
+    ∃ β : ℝ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') β ∧
+    (∀ γ : ℂ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') γ → γ ≠ β → ‖γ‖ < β ) := by
+  sorry
