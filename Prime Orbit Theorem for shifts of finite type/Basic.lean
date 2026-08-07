@@ -147,14 +147,17 @@ Rough proof:
   = Tr(Aⁿ)
 -/
 
-def fixBijectsTuple (n : ℕ) [NeZero n] :
-    Fix A n ≃ {v : Fin n → Fin k // ∀ i, A (v i) (v (i + 1)) = true} where
-  toFun x := ⟨fun i => (x : FullShift k) i, fun i => x.2.2 i⟩
-  invFun v := ⟨fun j => v (j % n : ℤ).toNat, sorry⟩
+lemma fix_bijects_tuple (n : ℕ) [NeZero n] :
+    Set.BijOn (fun x : FullShift k => (fun i : Fin n => x (i : ℤ))) (Fix A n)
+    {v : Fin n → Fin k | ∀ i, A (v i) (v (i + 1)) = true} := by
+  refine ⟨?_, ?_, ?_⟩
+  · sorry
+  · intro x hx y hy hxy
+    sorry
+  sorry
 
-theorem fix_eq_trace (n : ℕ) :
+theorem card_fix_eq_trace (n : ℕ) :
     (Nat.card (Fix A n) : ℝ) = trace (A.toRealMatrix ^ n) := by
-
   sorry
 
 /- lem3.2 (∑z^n/n#Fixn = 1/det(I-zA))-/
