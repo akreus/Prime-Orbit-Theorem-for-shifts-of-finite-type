@@ -179,3 +179,11 @@ theorem exists_maximal_eigenval (hA : A.IsAperiodic) : -- have A nonneg for free
     ∃ β : ℝ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') β ∧
     (∀ γ : ℂ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') γ → γ ≠ β → ‖γ‖ < β ) := by
   sorry
+
+/- lem3.3 -/
+theorem logDeriv_zeta_eq_sum_primeOrbits (z : ℂ) :
+    deriv (zeta A) z / zeta A z =
+      ∑' (τ : primeOrbits A), ∑' (m : ℕ),
+        ((τ : Cycle (FullShift k)).length : ℂ) *
+          z ^ ((m + 1) * (τ : Cycle (FullShift k)).length - 1) := by
+  sorry
