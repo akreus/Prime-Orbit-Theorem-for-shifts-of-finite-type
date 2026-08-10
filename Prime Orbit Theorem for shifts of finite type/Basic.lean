@@ -6,6 +6,7 @@ import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
+import Mathlib.Analysis.Analytic.Basic
 
 /-
 Might not even need SymbolicDynamics.Basic as we define SoFT to a higher
@@ -149,7 +150,7 @@ Rough proof:
 
 lemma fix_bijects_tuple (n : ℕ) [NeZero n] :
     Set.BijOn (fun x : FullShift k => (fun i : Fin n => x (i : ℤ))) (Fix A n)
-    {v : Fin n → Fin k | ∀ i, A (v i) (v (i + 1)) = true} := by
+      {v : Fin n → Fin k | ∀ i, A (v i) (v (i + 1)) = true} := by
   refine ⟨?_, ?_, ?_⟩
   · sorry
   · intro x hx y hy hxy
@@ -177,7 +178,7 @@ theorem zeta_eq_zetaProd (z : ℂ) (S : ℂ)
 /- use Perron-Frobenius as a black box result (not in Mathlib yet) -/
 theorem exists_maximal_eigenval (hA : A.IsAperiodic) : -- have A nonneg for free
     ∃ β : ℝ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') β ∧
-    (∀ γ : ℂ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') γ → γ ≠ β → ‖γ‖ < β ) := by
+      (∀ γ : ℂ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') γ → γ ≠ β → ‖γ‖ < β ) := by
   sorry
 
 /- lem3.3 -/
@@ -187,3 +188,23 @@ theorem logDeriv_zeta_eq_sum_primeOrbits (z : ℂ) :
         ((τ : Cycle (FullShift k)).length : ℂ) *
           z ^ ((m + 1) * (τ : Cycle (FullShift k)).length - 1) := by
   sorry
+
+/- beta : maximal e-val of A -/
+noncomputable
+def beta (hA : A.IsAperiodic) : ℝ := (exists_maximal_eigenval A hA).choose
+
+lemma beta_is_eigenval (hA : A.IsAperiodic) :
+    Module.End.HasEigenvalue (A.toComplexMatrix.toLin') (beta A hA) :=
+  (exists_maximal_eigenval A hA).choose_spec.1
+
+lemma beta_is_maximal (hA : A.IsAperiodic) :
+    ∀ γ : ℂ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') γ →
+      γ ≠ (beta A hA) → ‖γ‖ < (beta A hA) :=
+   (exists_maximal_eigenval A hA).choose_spec.2
+
+/- α as in lem3.4 -/
+noncomputable
+def alpha (z : ℂ) (hA : A.IsAperiodic) : ℂ := logDeriv (zeta A) z - (beta A hA)/(1 - z * beta A hA)
+
+/- lem3.4 -/
+--theorem alpha_analyticOnNhd (hA : A.IsAperiodic) :
