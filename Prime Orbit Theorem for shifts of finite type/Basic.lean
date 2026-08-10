@@ -177,9 +177,9 @@ theorem zeta_eq_zetaProd (z : ℂ) (S : ℂ)
 
 /- use Perron-Frobenius as a black box result (not in Mathlib yet) -/
 theorem exists_maximal_eigenval (hA : A.IsAperiodic) : -- have A nonneg for free
-    ∃ β : ℝ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') β ∧
-      (∀ γ : ℂ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') γ → γ ≠ β → ‖γ‖ < β ) := by
-  sorry
+    ∃ β : ℝ, 0 < β ∧ Module.End.HasEigenvalue (A.toComplexMatrix.toLin') β ∧
+      (∀ γ : ℂ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') γ → γ ≠ β → ‖γ‖ < β) := by
+  sorry -- NEED TO ADD THE FACT THAT β IS A SIMPLE EIGENVALUE SOMEHOW
 
 /- lem3.3 -/
 theorem logDeriv_zeta_eq_sum_primeOrbits (z : ℂ) :
@@ -195,16 +195,25 @@ def beta (hA : A.IsAperiodic) : ℝ := (exists_maximal_eigenval A hA).choose
 
 lemma beta_is_eigenval (hA : A.IsAperiodic) :
     Module.End.HasEigenvalue (A.toComplexMatrix.toLin') (beta A hA) :=
-  (exists_maximal_eigenval A hA).choose_spec.1
+  (exists_maximal_eigenval A hA).choose_spec.2.1
 
 lemma beta_is_maximal (hA : A.IsAperiodic) :
     ∀ γ : ℂ, Module.End.HasEigenvalue (A.toComplexMatrix.toLin') γ →
       γ ≠ (beta A hA) → ‖γ‖ < (beta A hA) :=
-   (exists_maximal_eigenval A hA).choose_spec.2
+   (exists_maximal_eigenval A hA).choose_spec.2.2
 
 /- α as in lem3.4 -/
 noncomputable
-def alpha (z : ℂ) (hA : A.IsAperiodic) : ℂ := logDeriv (zeta A) z - (beta A hA)/(1 - z * beta A hA)
+def alpha (hA : A.IsAperiodic) (z : ℂ) : ℂ :=
+  logDeriv (zeta A) z - (beta A hA)/(1 - z * beta A hA)
 
-/- lem3.4 -/
---theorem alpha_analyticOnNhd (hA : A.IsAperiodic) :
+/- lem3.4 but for |z| < β⁻¹ -/
+theorem alpha_analyticOnNhd (hA : A.IsAperiodic) :
+    AnalyticOnNhd ℂ (alpha A hA) {z : ℂ | ‖z‖ < (beta A hA)⁻¹} := by
+  sorry
+
+-- NOW WE WILL START PROVING Prime Orbit Theorem USING ASYMPTOTICS
+
+noncomputable
+def psi (x : ℕ) : ℝ :=
+  ∑' τ' : {τ' : PeriodicOrbit A // period A τ' ≤ x}, Λ A τ'
