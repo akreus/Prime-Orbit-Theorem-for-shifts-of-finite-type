@@ -118,15 +118,20 @@ def periodicOrbit_equiv_primeOrbit_ge_one :
     PeriodicOrbit A ≃ {(τ, m) : primeOrbits A × ℕ | 1 ≤ m} where
   toFun := fun τ' => ⟨(⟨periodicOrbit σ τ'.x, periodicOrbits_mem_primeOrbits A τ'⟩,
     τ'.n/(Λ A τ')), period_div_primePeriod_ge_one A τ'⟩
-  invFun := fun ⟨(τ, m), hm⟩ => -- want to construct a PeriodicOrbit using these
-    sorry
-  left_inv := sorry
+  invFun := fun ⟨(τ, m), hm⟩ =>
+    let x :=
+      ((Set.mem_image (fun x => periodicOrbit σ x) (SoFT A  ∩ periodicPts σ) τ).mp τ.2).choose
+    let hx :=
+      ((Set.mem_image (fun x => periodicOrbit σ x) (SoFT A  ∩ periodicPts σ) τ).mp τ.2).choose_spec.1
+    {
+      x := x
+      n := m * minimalPeriod σ x
+      hn := mul_pos hm (minimalPeriod_pos_of_mem_periodicPts hx.2)
+      mem := hx.1
+      periodic := isPeriodicPt_iff_minimalPeriod_dvd.mpr (dvd_mul_left (minimalPeriod σ x) m)
+    }
+  left_inv := sorry -- oversight: invFun chooses x, not necessarily the same x...
   right_inv := sorry
-
---temporary
-variable (τ : primeOrbits A)
-#check ((Set.mem_image (fun x => periodicOrbit σ x) (SoFT A  ∩ periodicPts σ) τ).mp τ.2).choose_spec
-#check Equiv.tsum_eq
 
 /- lem 3.1 (Σz^n/n#Fixn = S => zetaprod z = S)) -/
 theorem hasProd_zeta_of_hasSum (z : ℂ) (S : ℂ)
