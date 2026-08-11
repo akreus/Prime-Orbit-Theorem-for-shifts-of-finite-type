@@ -1,4 +1,3 @@
-import Mathlib.Dynamics.SymbolicDynamics.Basic
 import Mathlib.Dynamics.PeriodicPts.Defs
 import Mathlib.Dynamics.PeriodicPts.Lemmas
 import Mathlib.LinearAlgebra.Matrix.Trace
@@ -7,11 +6,6 @@ import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.Analysis.Complex.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 import Mathlib.Analysis.Analytic.Basic
-
-/-
-Might not even need SymbolicDynamics.Basic as we define SoFT to a higher
-level of specificity (generality and lemmas in Mathlib not necessary)
- -/
 
 open Function Matrix Complex
 
@@ -114,6 +108,25 @@ lemma mod_lt_one_of_hasSum (z : ℂ) (S : ℂ)
     (hS : HasSum (fun n : ℕ => z ^ n / n * (Nat.card (Fix A n) : ℂ)) S) :
     ‖z‖ < 1 := by
   sorry
+
+lemma period_div_primePeriod_ge_one (τ : PeriodicOrbit A) : 1 ≤ τ.n/(Λ A τ) := by
+  sorry
+
+/- bijection between τ' PeriodicOrbit and (τ,m) ∈ primeOrbit x ℕ≥1-/
+noncomputable
+def periodicOrbit_equiv_primeOrbit_ge_one :
+    PeriodicOrbit A ≃ {(τ, m) : primeOrbits A × ℕ | 1 ≤ m} where
+  toFun := fun τ' => ⟨(⟨periodicOrbit σ τ'.x, periodicOrbits_mem_primeOrbits A τ'⟩,
+    τ'.n/(Λ A τ')), period_div_primePeriod_ge_one A τ'⟩
+  invFun := fun ⟨(τ, m), hm⟩ => -- want to construct a PeriodicOrbit using these
+    sorry
+  left_inv := sorry
+  right_inv := sorry
+
+--temporary
+variable (τ : primeOrbits A)
+#check ((Set.mem_image (fun x => periodicOrbit σ x) (SoFT A  ∩ periodicPts σ) τ).mp τ.2).choose_spec
+#check Equiv.tsum_eq
 
 /- lem 3.1 (Σz^n/n#Fixn = S => zetaprod z = S)) -/
 theorem hasProd_zeta_of_hasSum (z : ℂ) (S : ℂ)
