@@ -59,15 +59,40 @@ noncomputable
 def primeOrbits : Set (Cycle (FullShift k)) :=
   (fun x => periodicOrbit σ x) '' (SoFT A  ∩ periodicPts σ)
 
-/- Periodic orbit as a pair (x, n) with proofs -/
+/- two points in same orbit are equivalent -/
+def orbitRel : Setoid {x : FullShift k // x ∈ periodicPts σ} where
+    r x y := ∃ k, σ^[k] x.1 = y.1
+    iseqv := ⟨fun x => ⟨0, rfl⟩, by
+  intro x y h
+  obtain ⟨k, hk⟩ := h
+  let n := minimalPeriod σ x.1
+  let hn := minimalPeriod_pos_of_mem_periodicPts x.2
+  let m := n * (k / n + 1)
+  use n * (k / n + 1) - k
+  rw [← hk, ← iterate_add_apply, Nat.sub_add_cancel]
+  · exact isPeriodicPt_iff_minimalPeriod_dvd.mpr (Nat.dvd_mul_right n (k / n + 1))
+  have h1 : n * (k / n) + k % n = k := Nat.div_add_mod k n
+  have h2 : k % n < n := Nat.mod_lt k hn
+  calc k = n * (k / n) + k % n := h1.symm
+    _ ≤ n * (k / n) + n := by omega
+    _ = n * (k / n + 1) := by ring
+  , by
+  intro x y z hxy hyz
+  obtain ⟨i, hi⟩ := hxy
+  obtain ⟨j ,hj⟩ := hyz
+  use i + j
+  rw [add_comm, iterate_add_apply, hi, hj]⟩
+
+/- Periodic orbit in SoFT A as a pair (x, n) with proofs -/
 structure PeriodicOrbit where
-  x : FullShift k
+  x : Quotient orbitRel
   n : ℕ
   hn : n > 0 -- if n=0 then IsPeriodicPt σ 0 x means x isn't periodic
-  mem : x ∈ SoFT A
-  periodic : IsPeriodicPt σ n x
+  mem : ∀ p ∈ x, p.1 ∈ SoFT A
+  --periodic : IsPeriodicPt σ n x
 
-def period (τ : PeriodicOrbit A) := τ.n
+noncomputable
+def period (τ : PeriodicOrbit A) := τ.n * minimalPeriod σ τ.x
 notation "λ" => period
 
 noncomputable
@@ -94,9 +119,9 @@ theorem periodicOrbits_mem_primeOrbits (τ : PeriodicOrbit A) :
   Set.mem_image_of_mem _ ⟨τ.mem, τ.n, τ.hn, τ.periodic⟩
 /- e.g. (1,2,1,2,1,2) PeriodicOrbit with (1,2) ∈ primeOrbits-/
 
-/- IsPrime then length of primeOrbit = τ.n -/
+/- IsPrime then length of primeOrbit = λ τ -/
 theorem periodicOrbit_length_eq_period {τ : PeriodicOrbit A} (hτ : τ.IsPrime) :
-    (periodicOrbit σ τ.x).length = τ.n := by
+    (periodicOrbit σ τ.x).length = τ.n * minimalPeriod σ τ.x := by
   simp [PeriodicOrbit.IsPrime, period, primePeriod] at hτ
   simp [hτ]
 
