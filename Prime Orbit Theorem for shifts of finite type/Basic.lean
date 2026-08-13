@@ -40,6 +40,19 @@ theorem shift_mapsTo (A : TransitionMatrix k) :
     Set.MapsTo σ (SoFT A) (SoFT A) := by
   exact Set.mapsTo_iff_subset_preimage.mpr fun ⦃a⦄ a_1 n ↦ a_1 (n + 1)
 
+/- iterated shift invariance -/
+theorem iterate_shift_mapsTo (A : TransitionMatrix k) (m : ℕ) :
+    Set.MapsTo σ^[m] (SoFT A) (SoFT A) := by
+  induction m with
+  | zero =>
+    simp
+    exact Set.mapsTo_id (SoFT A)
+  | succ d hd =>
+    intro x hx
+    rw [iterate_add_apply]
+    simp
+    exact hd (shift_mapsTo A hx)
+
 variable (A : TransitionMatrix k)
 
 /- Useful defns in Dynamics.PeriodicPts -/
@@ -61,21 +74,21 @@ def primeOrbits : Set (Cycle (FullShift k)) :=
 
 /- two points in same orbit are equivalent -/
 def orbitRel : Setoid {x : FullShift k // x ∈ periodicPts σ} where
-    r x y := ∃ k, σ^[k] x.1 = y.1
+    r x y := ∃ i, σ^[i] x.1 = y.1
     iseqv := ⟨fun x => ⟨0, rfl⟩, by
   intro x y h
-  obtain ⟨k, hk⟩ := h
+  obtain ⟨i, hi⟩ := h
   let n := minimalPeriod σ x.1
   let hn := minimalPeriod_pos_of_mem_periodicPts x.2
-  let m := n * (k / n + 1)
-  use n * (k / n + 1) - k
-  rw [← hk, ← iterate_add_apply, Nat.sub_add_cancel]
-  · exact isPeriodicPt_iff_minimalPeriod_dvd.mpr (Nat.dvd_mul_right n (k / n + 1))
-  have h1 : n * (k / n) + k % n = k := Nat.div_add_mod k n
-  have h2 : k % n < n := Nat.mod_lt k hn
-  calc k = n * (k / n) + k % n := h1.symm
-    _ ≤ n * (k / n) + n := by omega
-    _ = n * (k / n + 1) := by ring
+  let m := n * (i / n + 1)
+  use n * (i / n + 1) - i
+  rw [← hi, ← iterate_add_apply, Nat.sub_add_cancel]
+  · exact isPeriodicPt_iff_minimalPeriod_dvd.mpr (Nat.dvd_mul_right n (i / n + 1))
+  have h1 : n * (i / n) + i % n = i := Nat.div_add_mod i n
+  have h2 : i % n < n := Nat.mod_lt i hn
+  calc i = n * (i / n) + i % n := h1.symm
+    _ ≤ n * (i / n) + n := by omega
+    _ = n * (i / n + 1) := by ring
   , by
   intro x y z hxy hyz
   obtain ⟨i, hi⟩ := hxy
@@ -83,12 +96,28 @@ def orbitRel : Setoid {x : FullShift k // x ∈ periodicPts σ} where
   use i + j
   rw [add_comm, iterate_add_apply, hi, hj]⟩
 
+/- x y in same orbit ↔ (x ∈ ΣA ↔ y ∈ ΣA) -/
+theorem SoFT_orbitRel_invariant {x y : {x : FullShift k // x ∈ periodicPts σ}}
+    (h : orbitRel.r x y) : x.1 ∈ SoFT A ↔ y.1 ∈ SoFT A := by
+  obtain ⟨i, hi⟩ := h
+  constructor
+  · intro hx
+    rw [← hi]
+    exact iterate_shift_mapsTo A i hx
+  obtain ⟨j, hj⟩ := orbitRel.iseqv.symm ⟨i, hi⟩
+  intro hy
+  rw [← hj]
+  exact iterate_shift_mapsTo A j hy
+
+def InSoFT (x : Quotient (@orbitRel k)) : Prop :=
+  Quotient.liftOn x (fun x => x.1 ∈ SoFT A) (fun _ _ h => propext (SoFT_orbitRel_invariant A h))
+
 /- Periodic orbit in SoFT A as a pair (x, n) with proofs -/
 structure PeriodicOrbit where
-  x : Quotient orbitRel
+  x : Quotient (@orbitRel k)
   n : ℕ
   hn : n > 0 -- if n=0 then IsPeriodicPt σ 0 x means x isn't periodic
-  mem : ∀ p ∈ x, p.1 ∈ SoFT A
+  mem : InSoFT A x
   --periodic : IsPeriodicPt σ n x
 
 noncomputable
