@@ -45,12 +45,10 @@ theorem iterate_shift_mapsTo (A : TransitionMatrix k) (m : ℕ) :
     Set.MapsTo σ^[m] (SoFT A) (SoFT A) := by
   induction m with
   | zero =>
-    simp
     exact Set.mapsTo_id (SoFT A)
   | succ d hd =>
     intro x hx
     rw [iterate_add_apply]
-    simp
     exact hd (shift_mapsTo A hx)
 
 variable (A : TransitionMatrix k)
@@ -199,9 +197,31 @@ def periodicOrbit_equiv_primeOrbit_ge_one :
   left_inv := sorry -- oversight: invFun chooses x, not necessarily the same x...
   right_inv := sorry -/
 
+/- periodicOrbit σ respects orbitRel.r -/
+lemma periodicOrbit_orbitRel_invariant {a b : {x : FullShift k // x ∈ periodicPts σ}}
+    (h : orbitRel.r a b) : periodicOrbit σ a.1 = periodicOrbit σ b.1 := by
+  obtain ⟨i, hi⟩ := h
+  rw [← hi]
+  exact (periodicOrbit_apply_iterate_eq a.2 i).symm
+
+/- toFun construction proof -/
+lemma periodicOrbit_mem_primeOrbits (τ : PeriodicOrbit A) :
+    Quotient.liftOn τ.x (fun x => periodicOrbit σ x)
+      (fun _ _ h => periodicOrbit_orbitRel_invariant h) ∈ primeOrbits A := by
+  induction τ.x using Quotient.inductionOn with
+  | _ x =>
+    simp only [Quotient.lift_mk]
+    apply Set.mem_image_of_mem
+
+    sorry
+
+noncomputable
 def periodicOrbit_equiv_primeOrbit_ge_one :
     PeriodicOrbit A ≃ primeOrbits A × {m : ℕ | 1 ≤ m} where
-  toFun := sorry -- need periodicOrbit_orbitRel_invariant lemma
+  toFun :=
+    fun τ => (⟨Quotient.liftOn τ.x (fun x => periodicOrbit σ x)
+      (fun _ _ h => periodicOrbit_orbitRel_invariant h), periodicOrbit_mem_primeOrbits A τ⟩,
+        ⟨τ.n, τ.hn⟩)
   invFun := sorry
   left_inv := sorry
   right_inv := sorry
