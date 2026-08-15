@@ -109,6 +109,7 @@ theorem SoFT_orbitRel_invariant {x y : {x : FullShift k // x ∈ periodicPts σ}
   rw [← hj]
   exact iterate_shift_mapsTo A j hy
 
+/- InSoFT x iff (any choice of lift of x) ∈ SoFT A -/
 def InSoFT (x : Quotient (@orbitRel k)) : Prop :=
   Quotient.liftOn x (fun x => x.1 ∈ SoFT A) (fun _ _ h => propext (SoFT_orbitRel_invariant A h))
 
@@ -116,21 +117,32 @@ def InSoFT (x : Quotient (@orbitRel k)) : Prop :=
 structure PeriodicOrbit where
   x : Quotient (@orbitRel k)
   n : ℕ
-  hn : n > 0 -- if n=0 then IsPeriodicPt σ 0 x means x isn't periodic
+  hn : 1 ≤ n -- if n=0 then IsPeriodicPt σ 0 x means x isn't periodic
   mem : InSoFT A x
-  --periodic : IsPeriodicPt σ n x
 
+/- a ≈ b then minimalPeriod σ a = minimalPeriod σ b -/
+lemma minimalPeriod_orbitRel_invariant {a b : {x // x ∈ periodicPts σ}}
+    (h : (@orbitRel k).r a b) : minimalPeriod σ a.1 = minimalPeriod σ b.1 := by
+  obtain ⟨i, hi⟩ := h
+  rw [← hi]
+  exact (minimalPeriod_apply_iterate a.2 i).symm
+
+--def period (τ : PeriodicOrbit A) := τ.n * minimalPeriod σ τ.x
 noncomputable
-def period (τ : PeriodicOrbit A) := τ.n * minimalPeriod σ τ.x
+def period (τ : PeriodicOrbit A) :=
+  τ.n * Quotient.liftOn τ.x (fun x => minimalPeriod σ x.1)
+    (fun _ _ h => minimalPeriod_orbitRel_invariant h)
 notation "λ" => period
 
 noncomputable
-def primePeriod (τ : PeriodicOrbit A) := minimalPeriod σ τ.x
+def primePeriod (τ : PeriodicOrbit A) :=
+  Quotient.liftOn τ.x (fun x => minimalPeriod σ x.1)
+    (fun _ _ h => minimalPeriod_orbitRel_invariant h)
 notation "Λ" => primePeriod
 
 /- orbit is prime if minimal period equals period -/
 def PeriodicOrbit.IsPrime (τ : PeriodicOrbit A) : Prop :=
-  period _ τ = primePeriod _ τ
+  τ.n = 1
 
 /- def as in lem 3.2 then prove other defns backwards -/
 noncomputable
@@ -166,7 +178,7 @@ lemma mod_lt_one_of_hasSum (z : ℂ) (S : ℂ)
 lemma period_div_primePeriod_ge_one (τ : PeriodicOrbit A) : 1 ≤ τ.n/(Λ A τ) := by
   sorry
 
-/- bijection between τ' PeriodicOrbit and (τ,m) ∈ primeOrbit x ℕ≥1-/
+/- bijection between τ' PeriodicOrbit and (τ,m) ∈ primeOrbit x ℕ≥1
 noncomputable
 def periodicOrbit_equiv_primeOrbit_ge_one :
     PeriodicOrbit A ≃ {(τ, m) : primeOrbits A × ℕ | 1 ≤ m} where
@@ -185,6 +197,13 @@ def periodicOrbit_equiv_primeOrbit_ge_one :
       periodic := isPeriodicPt_iff_minimalPeriod_dvd.mpr (dvd_mul_left (minimalPeriod σ x) m)
     }
   left_inv := sorry -- oversight: invFun chooses x, not necessarily the same x...
+  right_inv := sorry -/
+
+def periodicOrbit_equiv_primeOrbit_ge_one :
+    PeriodicOrbit A ≃ primeOrbits A × {m : ℕ | 1 ≤ m} where
+  toFun := sorry -- need periodicOrbit_orbitRel_invariant lemma
+  invFun := sorry
+  left_inv := sorry
   right_inv := sorry
 
 /- lem 3.1 (Σz^n/n#Fixn = S => zetaprod z = S)) -/
