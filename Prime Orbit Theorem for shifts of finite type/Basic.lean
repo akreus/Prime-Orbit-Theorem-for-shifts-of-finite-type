@@ -94,7 +94,7 @@ def orbitRel : Setoid {x : FullShift k // x ∈ periodicPts σ} where
   use i + j
   rw [add_comm, iterate_add_apply, hi, hj]⟩
 
-/- x y in same orbit ↔ (x ∈ ΣA ↔ y ∈ ΣA) -/
+/- x y in same orbit then (x ∈ ΣA ↔ y ∈ ΣA) -/
 theorem SoFT_orbitRel_invariant {x y : {x : FullShift k // x ∈ periodicPts σ}}
     (h : orbitRel.r x y) : x.1 ∈ SoFT A ↔ y.1 ∈ SoFT A := by
   obtain ⟨i, hi⟩ := h
@@ -152,18 +152,6 @@ noncomputable
 def zetaProd (z : ℂ) : ℂ :=
   ∏' τ : primeOrbits A, (1 - z ^ (τ : Cycle (FullShift k)).length)⁻¹
 
-/- τ PeriodicOrbit, then τ.x has a primeOrbit-/
-theorem periodicOrbits_mem_primeOrbits (τ : PeriodicOrbit A) :
-    periodicOrbit σ τ.x ∈ primeOrbits A :=
-  Set.mem_image_of_mem _ ⟨τ.mem, τ.n, τ.hn, τ.periodic⟩
-/- e.g. (1,2,1,2,1,2) PeriodicOrbit with (1,2) ∈ primeOrbits-/
-
-/- IsPrime then length of primeOrbit = λ τ -/
-theorem periodicOrbit_length_eq_period {τ : PeriodicOrbit A} (hτ : τ.IsPrime) :
-    (periodicOrbit σ τ.x).length = τ.n * minimalPeriod σ τ.x := by
-  simp [PeriodicOrbit.IsPrime, period, primePeriod] at hτ
-  simp [hτ]
-
 /- power series of log(1-z) in ℂ -/
 #check hasSum_taylorSeries_neg_log
 
@@ -172,30 +160,6 @@ lemma mod_lt_one_of_hasSum (z : ℂ) (S : ℂ)
     (hS : HasSum (fun n : ℕ => z ^ n / n * (Nat.card (Fix A n) : ℂ)) S) :
     ‖z‖ < 1 := by
   sorry
-
-lemma period_div_primePeriod_ge_one (τ : PeriodicOrbit A) : 1 ≤ τ.n/(Λ A τ) := by
-  sorry
-
-/- bijection between τ' PeriodicOrbit and (τ,m) ∈ primeOrbit x ℕ≥1
-noncomputable
-def periodicOrbit_equiv_primeOrbit_ge_one :
-    PeriodicOrbit A ≃ {(τ, m) : primeOrbits A × ℕ | 1 ≤ m} where
-  toFun := fun τ' => ⟨(⟨periodicOrbit σ τ'.x, periodicOrbits_mem_primeOrbits A τ'⟩,
-    τ'.n/(Λ A τ')), period_div_primePeriod_ge_one A τ'⟩
-  invFun := fun ⟨(τ, m), hm⟩ =>
-    let x :=
-      ((Set.mem_image (fun x => periodicOrbit σ x) (SoFT A  ∩ periodicPts σ) τ).mp τ.2).choose
-    let hx :=
-      ((Set.mem_image (fun x => periodicOrbit σ x) (SoFT A  ∩ periodicPts σ) τ).mp τ.2).choose_spec.1
-    {
-      x := x
-      n := m * minimalPeriod σ x
-      hn := mul_pos hm (minimalPeriod_pos_of_mem_periodicPts hx.2)
-      mem := hx.1
-      periodic := isPeriodicPt_iff_minimalPeriod_dvd.mpr (dvd_mul_left (minimalPeriod σ x) m)
-    }
-  left_inv := sorry -- oversight: invFun chooses x, not necessarily the same x...
-  right_inv := sorry -/
 
 /- periodicOrbit σ respects orbitRel.r -/
 lemma periodicOrbit_orbitRel_invariant {a b : {x : FullShift k // x ∈ periodicPts σ}}
@@ -208,12 +172,15 @@ lemma periodicOrbit_orbitRel_invariant {a b : {x : FullShift k // x ∈ periodic
 lemma periodicOrbit_mem_primeOrbits (τ : PeriodicOrbit A) :
     Quotient.liftOn τ.x (fun x => periodicOrbit σ x)
       (fun _ _ h => periodicOrbit_orbitRel_invariant h) ∈ primeOrbits A := by
+  have := τ.mem
+  revert this
   induction τ.x using Quotient.inductionOn with
   | _ x =>
+    intro hx
     simp only [Quotient.lift_mk]
+    change x.1 ∈ SoFT A at hx
     apply Set.mem_image_of_mem
-
-    sorry
+    exact ⟨hx, x.2⟩
 
 noncomputable
 def periodicOrbit_equiv_primeOrbit_ge_one :
@@ -222,9 +189,30 @@ def periodicOrbit_equiv_primeOrbit_ge_one :
     fun τ => (⟨Quotient.liftOn τ.x (fun x => periodicOrbit σ x)
       (fun _ _ h => periodicOrbit_orbitRel_invariant h), periodicOrbit_mem_primeOrbits A τ⟩,
         ⟨τ.n, τ.hn⟩)
-  invFun := sorry
-  left_inv := sorry
+  invFun := fun (τ, ⟨m, hm⟩) =>
+    let x :=
+      ((Set.mem_image (fun x => periodicOrbit σ x) (SoFT A  ∩ periodicPts σ) τ).mp τ.2).choose
+    let hx :=
+      ((Set.mem_image (fun x => periodicOrbit σ x) (SoFT A  ∩ periodicPts σ) τ).mp τ.2).choose_spec
+    {
+      x := ⟦⟨x, hx.1.2⟩⟧
+      n := m
+      hn := hm
+      mem := by exact hx.1.1
+    }
+  left_inv := by
+    intro τ
+    obtain ⟨x, n, hn, mem⟩ := τ
+    simp
+    induction x using Quotient.inductionOn with
+    | _ x =>
+      rw [Quotient.eq]
+      change x.1 ∈ SoFT A at mem
+      sorry
   right_inv := sorry
+
+/- Change indexing using bijection -/
+#check Equiv.tsum_eq (periodicOrbit_equiv_primeOrbit_ge_one A) (fun _ _ => 1)
 
 /- lem 3.1 (Σz^n/n#Fixn = S => zetaprod z = S)) -/
 theorem hasProd_zeta_of_hasSum (z : ℂ) (S : ℂ)
